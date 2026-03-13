@@ -21,13 +21,7 @@ mongoose.connect(process.env.MONGO_URL)
   });
 
 app.use(cors({
-  origin: [
-    process.env.FRONT_URL,
-    "http://localhost:5173",
-    "https://bodega-front-pied.vercel.app"
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  origin: true,
   credentials: true
 }));
 
