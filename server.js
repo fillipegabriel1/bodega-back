@@ -32,9 +32,6 @@ app.use(cors({
   credentials: true
 }));
 
-/* liberar preflight */
-app.options('*', cors());
-
 /* ROTAS PUBLICAS */
 app.use('/api/user', userRouter);
 
