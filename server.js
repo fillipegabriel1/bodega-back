@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 dotenv.config();
+
 import mongoose from 'mongoose';
 import cors from 'cors';
 
@@ -19,21 +20,23 @@ mongoose.connect(process.env.MONGO_URL)
     console.error('❌ Erro ao conectar no banco:', err);
   });
 
-
-app.use(express.json());
-
 app.use(cors({
-  origin: [process.env.FRONT_URL, "http://localhost:5173"],
+  origin: [
+    process.env.FRONT_URL,
+    "http://localhost:5173",
+    "https://bodega-front-pied.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
 
+app.use('/api/user', userRouter);
+
 app.use(authMiddleware);
 
-
-app.use('/api/user', userRouter);
 app.use('/api/product', productRouter);
 app.use('/api/client', clientRouter);
-
 
 const PORT = process.env.PORT || 3000;
 
