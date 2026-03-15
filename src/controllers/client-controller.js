@@ -3,37 +3,94 @@ import Transaction from "../models/transaction-model.js";
 
 const controller = {
 
-    // Criar cliente
+    /* =========================
+       CRIAR CLIENTE
+    ========================= */
     create: async (req, res) => {
         try {
-            const result = await Client.create(req.body);
-            res.status(201).json(result);
+            const { codigo, nome } = req.body;
+
+            if (!codigo || !nome) {
+                return res.status(400).json({
+                    message: "Código e nome são obrigatórios"
+                });
+            }
+
+            const exist = await Client.findOne({ codigo });
+
+            if (exist) {
+                return res.status(400).json({
+                    message: "Cliente já existe"
+                });
+            }
+
+            const client = await Client.create({
+                codigo,
+                nome,
+                saldo: 0
+            });
+
+            res.status(201).json(client);
+
         } catch (error) {
-            res.status(400).json({ message: "Erro ao criar cliente", error: error.message });
+            res.status(500).json({
+                message: "Erro ao criar cliente",
+                error: error.message
+            });
         }
     },
 
-    // Buscar por código
+    /* =========================
+       BUSCAR CLIENTE POR CÓDIGO
+    ========================= */
     getByCodigo: async (req, res) => {
         try {
-            const result = await Client.findOne({ codigo: req.params.codigo });
-            if (!result) return res.status(404).json({ message: "Cliente não encontrado" });
 
-            res.status(200).json(result);
+            const codigo = Number(req.params.codigo);
+
+            const client = await Client.findOne({ codigo });
+
+            if (!client) {
+                return res.status(404).json({
+                    message: "Cliente não encontrado"
+                });
+            }
+
+            res.status(200).json(client);
+
         } catch (error) {
-            res.status(500).json({ message: "Erro ao buscar cliente", error: error.message });
+            res.status(500).json({
+                message: "Erro ao buscar cliente",
+                error: error.message
+            });
         }
     },
 
-    // Recarregar saldo
+    /* =========================
+       RECARREGAR SALDO
+    ========================= */
     recharge: async (req, res) => {
         try {
-            const { valor } = req.body;
 
-            const client = await Client.findOne({ codigo: req.params.codigo });
-            if (!client) return res.status(404).json({ message: "Cliente não encontrado" });
+            const codigo = Number(req.params.codigo);
+            const valor = Number(req.body.valor);
+
+            if (!valor || valor <= 0) {
+                return res.status(400).json({
+                    message: "Valor inválido para recarga"
+                });
+            }
+
+            const client = await Client.findOne({ codigo });
+
+            if (!client) {
+                return res.status(404).json({
+                    message: "Cliente não encontrado"
+                });
+            }
 
             client.saldo += valor;
+
             await client.save();
 
             await Transaction.create({
@@ -42,26 +99,50 @@ const controller = {
                 valor
             });
 
-            res.status(200).json({ message: "Saldo recarregado", saldoAtual: client.saldo });
+            res.status(200).json({
+                message: "Saldo recarregado",
+                saldoAtual: client.saldo
+            });
 
         } catch (error) {
-            res.status(500).json({ message: "Erro ao recarregar saldo", error: error.message });
+            res.status(500).json({
+                message: "Erro ao recarregar saldo",
+                error: error.message
+            });
         }
     },
 
-    // Debitar saldo
+    /* =========================
+       DEBITAR SALDO
+    ========================= */
     debit: async (req, res) => {
         try {
-            const { valor } = req.body;
 
-            const client = await Client.findOne({ codigo: req.params.codigo });
-            if (!client) return res.status(404).json({ message: "Cliente não encontrado" });
+            const codigo = Number(req.params.codigo);
+            const valor = Number(req.body.valor);
+
+            if (!valor || valor <= 0) {
+                return res.status(400).json({
+                    message: "Valor inválido para débito"
+                });
+            }
+
+            const client = await Client.findOne({ codigo });
+
+            if (!client) {
+                return res.status(404).json({
+                    message: "Cliente não encontrado"
+                });
+            }
 
             if (client.saldo < valor) {
-                return res.status(400).json({ message: "Saldo insuficiente" });
+                return res.status(400).json({
+                    message: "Saldo insuficiente"
+                });
             }
 
             client.saldo -= valor;
+
             await client.save();
 
             await Transaction.create({
@@ -70,28 +151,48 @@ const controller = {
                 valor
             });
 
-            res.status(200).json({ message: "Saldo debitado", saldoAtual: client.saldo });
+            res.status(200).json({
+                message: "Saldo debitado",
+                saldoAtual: client.saldo
+            });
 
         } catch (error) {
-            res.status(500).json({ message: "Erro ao debitar saldo", error: error.message });
+            res.status(500).json({
+                message: "Erro ao debitar saldo",
+                error: error.message
+            });
         }
     },
 
-    // Histórico por cliente
+    /* =========================
+       HISTÓRICO DE TRANSAÇÕES
+    ========================= */
     getHistory: async (req, res) => {
         try {
-            const client = await Client.findOne({ codigo: req.params.codigo });
-            if (!client) return res.status(404).json({ message: "Cliente não encontrado" });
 
-            const transactions = await Transaction.find({ clienteId: client._id })
+            const codigo = Number(req.params.codigo);
+
+            const client = await Client.findOne({ codigo });
+
+            if (!client) {
+                return res.status(404).json({
+                    message: "Cliente não encontrado"
+                });
+            }
+
+            const transactions = await Transaction
+                .find({ clienteId: client._id })
                 .sort({ data: -1 });
 
             res.status(200).json(transactions);
 
         } catch (error) {
-            res.status(500).json({ message: "Erro ao buscar histórico", error: error.message });
+            res.status(500).json({
+                message: "Erro ao buscar histórico",
+                error: error.message
+            });
         }
-}
+    }
 
 };
 
