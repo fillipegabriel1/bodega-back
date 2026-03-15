@@ -36,8 +36,8 @@ const controller = {
     },
 
     getAll: async function (req, res) {
-        const result = await User.getAll({}, { __v: false, _id: false });
-        res.status(200).json(result);
+    const result = await User.find({}, { __v: false, _id: false });
+    res.status(200).json(result);
     },
 
     create: async function (req, res) {
