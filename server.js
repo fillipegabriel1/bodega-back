@@ -1,16 +1,17 @@
 import express from 'express';
 import dotenv from 'dotenv';
-dotenv.config();
 import mongoose from 'mongoose';
 import cors from 'cors';
 
 import userRouter from './src/routers/user-router.js';
 import productRouter from './src/routers/product-router.js';
 import clientRouter from './src/routers/client-router.js';
-import authMiddleware from './src/services/auth-middleware.js';
+
+dotenv.config();
 
 const app = express();
 
+/* CONEXÃO COM MONGODB */
 mongoose.connect(process.env.MONGO_URL)
   .then(() => {
     console.log('✅ Banco conectado com sucesso');
@@ -19,9 +20,9 @@ mongoose.connect(process.env.MONGO_URL)
     console.error('❌ Erro ao conectar no banco:', err);
   });
 
+/* MIDDLEWARES */
 app.use(express.json());
 
-/* CORS CORRETO */
 app.use(cors({
   origin: [
     process.env.FRONT_URL,
@@ -32,14 +33,17 @@ app.use(cors({
   credentials: true
 }));
 
-/* ROTAS PUBLICAS */
-app.use('/api/user', userRouter);
+/* ROTA DE TESTE DA API */
+app.get('/', (req, res) => {
+  res.json({ status: "API Bodega funcionando 🚀" });
+});
 
-/* ROTAS PROTEGIDAS */
-app.use(authMiddleware);
+/* ROTAS DA API (SEM AUTENTICAÇÃO) */
+app.use('/api/user', userRouter);
 app.use('/api/product', productRouter);
 app.use('/api/client', clientRouter);
 
+/* PORTA */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
