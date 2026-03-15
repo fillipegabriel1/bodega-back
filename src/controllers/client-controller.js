@@ -8,6 +8,7 @@ const controller = {
     ========================= */
     create: async (req, res) => {
         try {
+
             const { codigo, nome } = req.body;
 
             if (!codigo || !nome) {
@@ -33,10 +34,12 @@ const controller = {
             res.status(201).json(client);
 
         } catch (error) {
+
             res.status(500).json({
                 message: "Erro ao criar cliente",
                 error: error.message
             });
+
         }
     },
 
@@ -44,6 +47,7 @@ const controller = {
        BUSCAR CLIENTE POR CÓDIGO
     ========================= */
     getByCodigo: async (req, res) => {
+
         try {
 
             const codigo = Number(req.params.codigo);
@@ -59,17 +63,22 @@ const controller = {
             res.status(200).json(client);
 
         } catch (error) {
+
             res.status(500).json({
                 message: "Erro ao buscar cliente",
                 error: error.message
             });
+
         }
+
     },
 
     /* =========================
        RECARREGAR SALDO
+       (OPERAÇÃO ATÔMICA)
     ========================= */
     recharge: async (req, res) => {
+
         try {
 
             const codigo = Number(req.params.codigo);
@@ -81,17 +90,17 @@ const controller = {
                 });
             }
 
-            const client = await Client.findOne({ codigo });
+            const client = await Client.findOneAndUpdate(
+                { codigo },
+                { $inc: { saldo: valor } },
+                { new: true }
+            );
 
             if (!client) {
                 return res.status(404).json({
                     message: "Cliente não encontrado"
                 });
             }
-
-            client.saldo += valor;
-
-            await client.save();
 
             await Transaction.create({
                 clienteId: client._id,
@@ -105,17 +114,22 @@ const controller = {
             });
 
         } catch (error) {
+
             res.status(500).json({
                 message: "Erro ao recarregar saldo",
                 error: error.message
             });
+
         }
+
     },
 
     /* =========================
        DEBITAR SALDO
+       (OPERAÇÃO ATÔMICA)
     ========================= */
     debit: async (req, res) => {
+
         try {
 
             const codigo = Number(req.params.codigo);
@@ -127,23 +141,24 @@ const controller = {
                 });
             }
 
-            const client = await Client.findOne({ codigo });
+            const client = await Client.findOneAndUpdate(
+                {
+                    codigo,
+                    saldo: { $gte: valor }
+                },
+                {
+                    $inc: { saldo: -valor }
+                },
+                {
+                    new: true
+                }
+            );
 
             if (!client) {
-                return res.status(404).json({
-                    message: "Cliente não encontrado"
-                });
-            }
-
-            if (client.saldo < valor) {
                 return res.status(400).json({
-                    message: "Saldo insuficiente"
+                    message: "Saldo insuficiente ou cliente não encontrado"
                 });
             }
-
-            client.saldo -= valor;
-
-            await client.save();
 
             await Transaction.create({
                 clienteId: client._id,
@@ -157,17 +172,21 @@ const controller = {
             });
 
         } catch (error) {
+
             res.status(500).json({
                 message: "Erro ao debitar saldo",
                 error: error.message
             });
+
         }
+
     },
 
     /* =========================
        HISTÓRICO DE TRANSAÇÕES
     ========================= */
     getHistory: async (req, res) => {
+
         try {
 
             const codigo = Number(req.params.codigo);
@@ -187,11 +206,14 @@ const controller = {
             res.status(200).json(transactions);
 
         } catch (error) {
+
             res.status(500).json({
                 message: "Erro ao buscar histórico",
                 error: error.message
             });
+
         }
+
     }
 
 };
