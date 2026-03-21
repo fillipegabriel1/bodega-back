@@ -1,37 +1,44 @@
-import Product from '../models/product-model.js';
+import Product from "../models/product-model.js";
 
 const controller = {
 
-    deleteOne: async function (req, res) {
-        const result = await Product.deleteOne({ _id: req.params.id });
-        res.status(200).json(result);
-    },
-
-    getOne: async function (req, res) {
-        const result = await Product.findById(req.params.id);
-        if (!result) return res.status(404).json({ message: "Produto não encontrado" });
-
-        const { __v, _id, ...json } = result.toObject();
-        res.status(200).json(json);
-    },
-
-    updateOne: async function (req, res) {
-        const result = await Product.updateOne(
-            { _id: req.params.id },
-            req.body
-        );
-        res.status(200).json(result);
-    },
-
-    getAll: async function (req, res) {
-        const result = await Product.find(); 
-        res.status(200).json(result);
-    },
-
-    create: async function (req, res) {
-        const result = await Product.create(req.body);
-        res.status(201).json(result);
+  create: async (req, res) => {
+    try {
+      const product = await Product.create(req.body);
+      res.status(201).json(product);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao criar produto" });
     }
-}
+  },
+
+  getAll: async (req, res) => {
+    const products = await Product.find();
+    res.json(products);
+  },
+
+  update: async (req, res) => {
+    try {
+      const updated = await Product.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new: true }
+      );
+
+      res.json(updated);
+    } catch {
+      res.status(500).json({ message: "Erro ao atualizar" });
+    }
+  },
+
+  delete: async (req, res) => {
+    try {
+      await Product.findByIdAndDelete(req.params.id);
+      res.json({ message: "Produto deletado" });
+    } catch {
+      res.status(500).json({ message: "Erro ao deletar" });
+    }
+  }
+
+};
 
 export default controller;
