@@ -20,10 +20,12 @@ const controller = {
 
       let total = 0;
 
-      // 🔥 validar e calcular total
+      /* =========================
+         VALIDAR E CALCULAR
+      ========================= */
       for (const item of itens) {
 
-        const produto = await Product.findById(item.id);
+        const produto = await Product.findById(item._id); // ✅ CORRIGIDO
 
         if (!produto) {
           return res.status(404).json({
@@ -31,14 +33,13 @@ const controller = {
           });
         }
 
-        if (produto.quantidade < 1) {
+        if (produto.quantidade < item.quantidade) {
           return res.status(400).json({
-            message: `${produto.nome} sem estoque`
+            message: `${produto.nome} sem estoque suficiente`
           });
         }
 
-        total += produto.preco;
-
+        total += produto.preco * item.quantidade;
       }
 
       if (client.saldo < total) {
@@ -47,21 +48,26 @@ const controller = {
         });
       }
 
-      // 🔥 debitar saldo
+      /* =========================
+         DEBITAR SALDO
+      ========================= */
       client.saldo -= total;
       await client.save();
 
-      // 🔥 baixar estoque
+      /* =========================
+         BAIXAR ESTOQUE
+      ========================= */
       for (const item of itens) {
 
-        const produto = await Product.findById(item.id);
+        const produto = await Product.findById(item._id);
 
-        produto.quantidade -= 1;
+        produto.quantidade -= item.quantidade;
         await produto.save();
-
       }
 
-      // 🔥 salvar transação
+      /* =========================
+         TRANSAÇÃO
+      ========================= */
       await Transaction.create({
         clienteId: client._id,
         tipo: "DEBITO",
@@ -88,5 +94,3 @@ const controller = {
 };
 
 export default controller;
-
-//salvar algo novo
