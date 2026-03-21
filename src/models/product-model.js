@@ -15,7 +15,7 @@ const productSchema = new mongoose.Schema({
   },
   categoria: {
   type: String,
-  enum: ["ALIMENTO", "BEBIDA", "DOCE"],
+  enum: ["ALIMENTO", "BEBIDA", "DOCE", "ARTIGO_RELIGIOSO"],
   required: true,
   default: "ALIMENTO"
 }
