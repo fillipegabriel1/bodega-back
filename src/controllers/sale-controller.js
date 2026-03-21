@@ -1,5 +1,6 @@
 import Client from "../models/client-model.js";
 import Transaction from "../models/transaction-model.js";
+import Product from "../models/product-model.js";
 
 const controller = {
 
@@ -9,12 +10,6 @@ const controller = {
 
       const { codigo, itens } = req.body;
 
-      if (!codigo || !itens || itens.length === 0) {
-        return res.status(400).json({
-          message: "Dados inválidos"
-        });
-      }
-
       const client = await Client.findOne({ codigo });
 
       if (!client) {
@@ -23,7 +18,28 @@ const controller = {
         });
       }
 
-      const total = itens.reduce((acc, item) => acc + item.preco, 0);
+      let total = 0;
+
+      // 🔥 validar e calcular total
+      for (const item of itens) {
+
+        const produto = await Product.findById(item.id);
+
+        if (!produto) {
+          return res.status(404).json({
+            message: `Produto não encontrado`
+          });
+        }
+
+        if (produto.quantidade < 1) {
+          return res.status(400).json({
+            message: `${produto.nome} sem estoque`
+          });
+        }
+
+        total += produto.preco;
+
+      }
 
       if (client.saldo < total) {
         return res.status(400).json({
@@ -31,9 +47,21 @@ const controller = {
         });
       }
 
+      // 🔥 debitar saldo
       client.saldo -= total;
       await client.save();
 
+      // 🔥 baixar estoque
+      for (const item of itens) {
+
+        const produto = await Product.findById(item.id);
+
+        produto.quantidade -= 1;
+        await produto.save();
+
+      }
+
+      // 🔥 salvar transação
       await Transaction.create({
         clienteId: client._id,
         tipo: "DEBITO",
