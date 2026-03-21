@@ -6,6 +6,8 @@ import cors from 'cors';
 import userRouter from './src/routers/user-router.js';
 import productRouter from './src/routers/product-router.js';
 import clientRouter from './src/routers/client-router.js';
+import dashboardRouter from './src/routers/dashboard-router.js';
+import saleRouter from './src/routers/sale-router.js';
 
 dotenv.config();
 
@@ -36,6 +38,8 @@ app.get('/', (req, res) => {
 app.use('/api/user', userRouter);
 app.use('/api/product', productRouter);
 app.use('/api/client', clientRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/sale', saleRouter);
 
 /* PORTA */
 const PORT = process.env.PORT || 3000;
