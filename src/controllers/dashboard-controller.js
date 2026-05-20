@@ -7,42 +7,148 @@ const controller = {
 
     try {
 
-      // 💰 TOTAL RECARGA
+      /* ================================
+         💰 TOTAL DE CRÉDITOS
+      ================================= */
+
       const totalRecarga = await Transaction.aggregate([
-        { $match: { tipo: "CREDITO" } },
-        { $group: { _id: null, total: { $sum: "$valor" } } }
+        {
+          $match: {
+            tipo: "CREDITO"
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: {
+              $sum: "$valor"
+            }
+          }
+        }
       ]);
 
-      // 💸 TOTAL DEBITO
+      /* ================================
+         💸 TOTAL DE VENDAS
+      ================================= */
+
       const totalDebito = await Transaction.aggregate([
-        { $match: { tipo: "DEBITO" } },
-        { $group: { _id: null, total: { $sum: "$valor" } } }
+        {
+          $match: {
+            tipo: "DEBITO"
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: {
+              $sum: "$valor"
+            }
+          }
+        }
       ]);
 
-      // 🏦 SALDO TOTAL DOS CLIENTES
+      /* ================================
+         🏦 SALDO DISPONÍVEL
+      ================================= */
+
       const saldoBodega = await Client.aggregate([
-        { $group: { _id: null, total: { $sum: "$saldo" } } }
+        {
+          $group: {
+            _id: null,
+            total: {
+              $sum: "$saldo"
+            }
+          }
+        }
       ]);
 
-      // 👥 CLIENTES
+      /* ================================
+         👥 CLIENTES CADASTRADOS
+      ================================= */
+
       const clientes = await Client.countDocuments();
 
-      // 🔄 TRANSAÇÕES
+      /* ================================
+         🔄 TOTAL DE TRANSAÇÕES
+      ================================= */
+
       const transacoes = await Transaction.countDocuments();
 
-      res.json({
-        totalRecarga: totalRecarga[0]?.total || 0,
-        totalDebito: totalDebito[0]?.total || 0,
-        saldoBodega: saldoBodega[0]?.total || 0,
+      /* ================================
+         💳 CLIENTES COM SALDO
+      ================================= */
+
+      const clientesComSaldo = await Client.countDocuments({
+        saldo: {
+          $gt: 0
+        }
+      });
+
+      /* ================================
+         📈 TICKET MÉDIO
+      ================================= */
+
+      const totalDebitoValor =
+        totalDebito[0]?.total || 0;
+
+      const ticketMedio =
+        transacoes > 0
+          ? totalDebitoValor / transacoes
+          : 0;
+
+      /* ================================
+         💰 TOTAL REALIZADO
+      ================================= */
+
+      const totalRecargaValor =
+        totalRecarga[0]?.total || 0;
+
+      const saldoDisponivel =
+        saldoBodega[0]?.total || 0;
+
+      /* ================================
+         📦 ÚLTIMAS TRANSAÇÕES
+      ================================= */
+
+      const ultimasTransacoes =
+        await Transaction.find()
+          .sort({ createdAt: -1 })
+          .limit(5);
+
+      /* ================================
+         🚀 RESPOSTA
+      ================================= */
+
+      res.status(200).json({
+
+        totalRecarga: totalRecargaValor,
+
+        totalDebito: totalDebitoValor,
+
+        saldoBodega: saldoDisponivel,
+
         clientes,
-        transacoes
+
+        transacoes,
+
+        ticketMedio,
+
+        clientesComSaldo,
+
+        ultimasTransacoes
+
       });
 
     } catch (error) {
 
+      console.log(error);
+
       res.status(500).json({
+
         message: "Erro ao carregar dashboard",
+
         error: error.message
+
       });
 
     }
