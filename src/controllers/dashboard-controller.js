@@ -133,6 +133,7 @@ const controller = {
 
           {
             $group: {
+
               _id: "$categoria",
 
               totalVendido: {
@@ -142,6 +143,7 @@ const controller = {
               quantidadeItens: {
                 $sum: "$quantidade"
               }
+
             }
           },
 
@@ -196,7 +198,7 @@ const controller = {
         ]);
 
       /* ================================
-         📈 PRODUTOS MAIS LUCRATIVOS
+         💸 PRODUTOS MAIS LUCRATIVOS
       ================================= */
 
       const produtosMaisLucrativos =
@@ -214,7 +216,7 @@ const controller = {
 
               _id: "$produto",
 
-              faturamento: {
+              totalVendido: {
                 $sum: "$valor"
               }
 
@@ -223,7 +225,7 @@ const controller = {
 
           {
             $sort: {
-              faturamento: -1
+              totalVendido: -1
             }
           },
 
@@ -234,7 +236,19 @@ const controller = {
         ]);
 
       /* ================================
-         🚀 RESPOSTA
+         👥 CLIENTES COM CRÉDITO
+      ================================= */
+
+      const clientesComCredito =
+        await Client.find({
+          saldo: { $gt: 0 }
+        })
+          .sort({ saldo: -1 })
+          .limit(10)
+          .select("codigo nome saldo");
+
+      /* ================================
+         🚀 RESPONSE
       ================================= */
 
       res.status(200).json({
@@ -259,7 +273,9 @@ const controller = {
 
         produtosMaisVendidos,
 
-        produtosMaisLucrativos
+        produtosMaisLucrativos,
+
+        clientesComCredito
 
       });
 
