@@ -14,7 +14,7 @@ const controller = {
       const totalRecarga = await Transaction.aggregate([
         {
           $match: {
-            tipo: "CREDITO"
+            tipo: "RECARGA"
           }
         },
         {
@@ -63,26 +63,27 @@ const controller = {
       ]);
 
       /* ================================
-         👥 CLIENTES CADASTRADOS
+         👥 CLIENTES
       ================================= */
 
-      const clientes = await Client.countDocuments();
+      const clientes =
+        await Client.countDocuments();
 
       /* ================================
-         🔄 TOTAL DE TRANSAÇÕES
+         🔄 TRANSAÇÕES
       ================================= */
 
-      const transacoes = await Transaction.countDocuments();
+      const transacoes =
+        await Transaction.countDocuments();
 
       /* ================================
          💳 CLIENTES COM SALDO
       ================================= */
 
-      const clientesComSaldo = await Client.countDocuments({
-        saldo: {
-          $gt: 0
-        }
-      });
+      const clientesComSaldo =
+        await Client.countDocuments({
+          saldo: { $gt: 0 }
+        });
 
       /* ================================
          📈 TICKET MÉDIO
@@ -97,7 +98,7 @@ const controller = {
           : 0;
 
       /* ================================
-         💰 TOTAL REALIZADO
+         💰 TOTAIS
       ================================= */
 
       const totalRecargaValor =
@@ -112,8 +113,125 @@ const controller = {
 
       const ultimasTransacoes =
         await Transaction.find()
+          .populate("clienteId", "nome codigo")
           .sort({ createdAt: -1 })
-          .limit(5);
+          .limit(10);
+
+      /* ================================
+         📊 VENDAS POR CATEGORIA
+      ================================= */
+
+      const vendasPorCategoria =
+        await Transaction.aggregate([
+
+          {
+            $match: {
+              tipo: "DEBITO",
+              categoria: { $ne: null }
+            }
+          },
+
+          {
+            $group: {
+              _id: "$categoria",
+
+              totalVendido: {
+                $sum: "$valor"
+              },
+
+              quantidadeItens: {
+                $sum: "$quantidade"
+              }
+            }
+          },
+
+          {
+            $sort: {
+              totalVendido: -1
+            }
+          }
+
+        ]);
+
+      /* ================================
+         🏆 PRODUTOS MAIS VENDIDOS
+      ================================= */
+
+      const produtosMaisVendidos =
+        await Transaction.aggregate([
+
+          {
+            $match: {
+              tipo: "DEBITO",
+              produto: { $ne: null }
+            }
+          },
+
+          {
+            $group: {
+
+              _id: "$produto",
+
+              totalVendido: {
+                $sum: "$valor"
+              },
+
+              quantidadeVendida: {
+                $sum: "$quantidade"
+              }
+
+            }
+          },
+
+          {
+            $sort: {
+              quantidadeVendida: -1
+            }
+          },
+
+          {
+            $limit: 5
+          }
+
+        ]);
+
+      /* ================================
+         📈 PRODUTOS MAIS LUCRATIVOS
+      ================================= */
+
+      const produtosMaisLucrativos =
+        await Transaction.aggregate([
+
+          {
+            $match: {
+              tipo: "DEBITO",
+              produto: { $ne: null }
+            }
+          },
+
+          {
+            $group: {
+
+              _id: "$produto",
+
+              faturamento: {
+                $sum: "$valor"
+              }
+
+            }
+          },
+
+          {
+            $sort: {
+              faturamento: -1
+            }
+          },
+
+          {
+            $limit: 5
+          }
+
+        ]);
 
       /* ================================
          🚀 RESPOSTA
@@ -135,7 +253,13 @@ const controller = {
 
         clientesComSaldo,
 
-        ultimasTransacoes
+        ultimasTransacoes,
+
+        vendasPorCategoria,
+
+        produtosMaisVendidos,
+
+        produtosMaisLucrativos
 
       });
 
