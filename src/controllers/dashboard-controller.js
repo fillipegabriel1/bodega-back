@@ -8,7 +8,7 @@ const controller = {
     try {
 
       /* ================================
-         💰 TOTAL DE CRÉDITOS
+         💰 TOTAL DE RECARGAS
       ================================= */
 
       const totalRecarga = await Transaction.aggregate([
@@ -48,10 +48,10 @@ const controller = {
       ]);
 
       /* ================================
-         🏦 SALDO DISPONÍVEL
+         🏦 SALDO TOTAL CLIENTES
       ================================= */
 
-      const saldoBodega = await Client.aggregate([
+      const saldoClientes = await Client.aggregate([
         {
           $group: {
             _id: null,
@@ -63,14 +63,14 @@ const controller = {
       ]);
 
       /* ================================
-         👥 CLIENTES
+         👥 TOTAL CLIENTES
       ================================= */
 
       const clientes =
         await Client.countDocuments();
 
       /* ================================
-         🔄 TRANSAÇÕES
+         🔄 TOTAL TRANSAÇÕES
       ================================= */
 
       const transacoes =
@@ -98,14 +98,14 @@ const controller = {
           : 0;
 
       /* ================================
-         💰 TOTAIS
+         💰 VALORES FINAIS
       ================================= */
 
       const totalRecargaValor =
         totalRecarga[0]?.total || 0;
 
       const saldoDisponivel =
-        saldoBodega[0]?.total || 0;
+        saldoClientes[0]?.total || 0;
 
       /* ================================
          📦 ÚLTIMAS TRANSAÇÕES
@@ -113,8 +113,16 @@ const controller = {
 
       const ultimasTransacoes =
         await Transaction.find()
-          .populate("clienteId", "nome codigo")
-          .sort({ createdAt: -1 })
+
+          .populate(
+            "clienteId",
+            "nome codigo"
+          )
+
+          .sort({
+            createdAt: -1
+          })
+
           .limit(10);
 
       /* ================================
@@ -127,7 +135,9 @@ const controller = {
           {
             $match: {
               tipo: "DEBITO",
-              categoria: { $ne: null }
+              categoria: {
+                $ne: null
+              }
             }
           },
 
@@ -165,7 +175,9 @@ const controller = {
           {
             $match: {
               tipo: "DEBITO",
-              produto: { $ne: null }
+              produto: {
+                $ne: null
+              }
             }
           },
 
@@ -207,7 +219,9 @@ const controller = {
           {
             $match: {
               tipo: "DEBITO",
-              produto: { $ne: null }
+              produto: {
+                $ne: null
+              }
             }
           },
 
@@ -243,9 +257,16 @@ const controller = {
         await Client.find({
           saldo: { $gt: 0 }
         })
-          .sort({ saldo: -1 })
+
+          .sort({
+            saldo: -1
+          })
+
           .limit(10)
-          .select("codigo nome saldo");
+
+          .select(
+            "codigo nome saldo"
+          );
 
       /* ================================
          🏆 CLIENTES QUE MAIS COMPRARAM
@@ -257,7 +278,9 @@ const controller = {
           {
             $match: {
               tipo: "DEBITO",
-              clienteId: { $ne: null }
+              clienteId: {
+                $ne: null
+              }
             }
           },
 
@@ -284,15 +307,16 @@ const controller = {
           },
 
           {
-            $limit: 5
-          },
-
-          {
             $lookup: {
+
               from: "clients",
+
               localField: "_id",
+
               foreignField: "_id",
+
               as: "cliente"
+
             }
           },
 
@@ -314,6 +338,20 @@ const controller = {
               totalCompras: 1
 
             }
+          },
+
+          /* 🚨 REMOVE FELIPE GABRIEL */
+
+          {
+            $match: {
+              nome: {
+                $ne: "Felipe Gabriel"
+              }
+            }
+          },
+
+          {
+            $limit: 5
           }
 
         ]);
@@ -324,11 +362,14 @@ const controller = {
 
       res.status(200).json({
 
-        totalRecarga: totalRecargaValor,
+        totalRecarga:
+          totalRecargaValor,
 
-        totalDebito: totalDebitoValor,
+        totalDebito:
+          totalDebitoValor,
 
-        saldoBodega: saldoDisponivel,
+        saldoBodega:
+          saldoDisponivel,
 
         clientes,
 
@@ -358,7 +399,8 @@ const controller = {
 
       res.status(500).json({
 
-        message: "Erro ao carregar dashboard",
+        message:
+          "Erro ao carregar dashboard",
 
         error: error.message
 
