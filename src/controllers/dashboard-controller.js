@@ -248,6 +248,77 @@ const controller = {
           .select("codigo nome saldo");
 
       /* ================================
+         🏆 CLIENTES QUE MAIS COMPRARAM
+      ================================= */
+
+      const rankingClientes =
+        await Transaction.aggregate([
+
+          {
+            $match: {
+              tipo: "DEBITO",
+              clienteId: { $ne: null }
+            }
+          },
+
+          {
+            $group: {
+
+              _id: "$clienteId",
+
+              totalGasto: {
+                $sum: "$valor"
+              },
+
+              totalCompras: {
+                $sum: 1
+              }
+
+            }
+          },
+
+          {
+            $sort: {
+              totalGasto: -1
+            }
+          },
+
+          {
+            $limit: 5
+          },
+
+          {
+            $lookup: {
+              from: "clients",
+              localField: "_id",
+              foreignField: "_id",
+              as: "cliente"
+            }
+          },
+
+          {
+            $unwind: "$cliente"
+          },
+
+          {
+            $project: {
+
+              _id: 0,
+
+              nome: "$cliente.nome",
+
+              codigo: "$cliente.codigo",
+
+              totalGasto: 1,
+
+              totalCompras: 1
+
+            }
+          }
+
+        ]);
+
+      /* ================================
          🚀 RESPONSE
       ================================= */
 
@@ -275,7 +346,9 @@ const controller = {
 
         produtosMaisLucrativos,
 
-        clientesComCredito
+        clientesComCredito,
+
+        rankingClientes
 
       });
 
