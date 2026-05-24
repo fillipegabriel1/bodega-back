@@ -343,14 +343,16 @@ const controller = {
           /* 🚨 REMOVE FELIPE GABRIEL */
 
           {
-            $match: {
-              nome: {
-                $ne: "Felipe Gabriel",
-                $ne: "TesteFinal",
-                $ne: "Arthur Pontes"
-              }
-            }
-          },
+  $match: {
+    nome: {
+      $nin: [
+        "Felipe Gabriel",
+        "TesteFinal",
+        "Arthur Pontes"
+      ]
+    }
+  }
+},
 
           {
             $limit: 5
