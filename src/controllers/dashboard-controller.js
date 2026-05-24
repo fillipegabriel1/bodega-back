@@ -345,7 +345,9 @@ const controller = {
           {
             $match: {
               nome: {
-                $ne: "Felipe Gabriel"
+                $ne: "Felipe Gabriel",
+                $ne: "TesteFinal",
+                $ne: "Arthur Pontes"
               }
             }
           },
